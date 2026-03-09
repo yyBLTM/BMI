@@ -1,332 +1,339 @@
-import React, { useState } from 'react';
-import { 
-  Calculator, 
-  RefreshCcw, 
-  ArrowRight, 
-  Target, 
-  TrendingDown, 
-  CheckCircle2, 
-  User, 
-  Ruler, 
-  Scale, 
-  Flame, 
-  HeartPulse,
-  ChevronRight,
-  Info,
-  Zap,
-  Utensils,
-  Activity
-} from 'lucide-react';
-
-const App = () => {
-  // 表單狀態
-  const [gender, setGender] = useState('male');
-  const [age, setAge] = useState('');
-  const [height, setHeight] = useState('');
-  const [weight, setWeight] = useState('');
-  const [waist, setWaist] = useState('');
-  const [activity, setActivity] = useState('1.2');
-  
-  // 計算結果狀態
-  const [result, setResult] = useState(null);
-
-  const calculateHealth = (e) => {
-    if (e) e.preventDefault();
-    if (height && weight && age) {
-      const hm = height / 100;
-      const bmi = parseFloat((weight / (hm * hm)).toFixed(1));
-      
-      // BMR 計算 (Mifflin-St Jeor 公式)
-      let bmr = (10 * weight) + (6.25 * height) - (5 * age);
-      bmr = gender === 'male' ? bmr + 5 : bmr - 161;
-      
-      // TDEE 計算
-      const tdee = Math.round(bmr * parseFloat(activity));
-      
-      // 腰圍評估
-      let waistStatus = "未提供";
-      let waistColor = "text-slate-400";
-      if (waist) {
-        if (gender === 'male') {
-          const isAtRisk = waist >= 90;
-          waistStatus = isAtRisk ? "警示 (腹部肥胖)" : "標準範圍";
-          waistColor = isAtRisk ? "text-rose-500" : "text-emerald-500";
-        } else {
-          const isAtRisk = waist >= 80;
-          waistStatus = isAtRisk ? "警示 (腹部肥胖)" : "標準範圍";
-          waistColor = isAtRisk ? "text-rose-500" : "text-emerald-500";
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Health Lab - Emerald Edition</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+        .animate-fade-in { animation: fadeIn 0.7s ease-out forwards; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateX(20px); }
+            to { opacity: 1; transform: translateX(0); }
         }
-      }
+        select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2334d399'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='9 5l7 7-7 7'%3E%3C/path%3E%3C/svg%3E"); background-position: right 1rem center; background-repeat: no-repeat; background-size: 1.2em; }
+    </style>
+</head>
+<body class="min-h-screen bg-slate-50 flex items-center justify-center p-4 md:p-8 text-slate-800">
 
-      // 理想體重與目標差距
-      const maxHealthyWeight = (24 * (hm * hm)).toFixed(1);
-      const weightDiff = (weight - maxHealthyWeight).toFixed(1);
-
-      // BMI 分類
-      let category = {};
-      if (bmi < 18.5) {
-        category = { label: '體重過輕', color: 'bg-cyan-500', text: 'text-cyan-500', border: 'border-cyan-200', lightBg: 'bg-cyan-50' };
-      } else if (bmi < 24) {
-        category = { label: '健康體重', color: 'bg-emerald-500', text: 'text-emerald-500', border: 'border-emerald-200', lightBg: 'bg-emerald-50' };
-      } else if (bmi < 27) {
-        category = { label: '體重過重', color: 'bg-orange-500', text: 'text-orange-600', border: 'border-orange-200', lightBg: 'bg-orange-50' };
-      } else {
-        category = { label: '肥胖狀態', color: 'bg-rose-500', text: 'text-rose-500', border: 'border-rose-200', lightBg: 'bg-rose-50' };
-      }
-
-      setResult({
-        bmi,
-        bmr: Math.round(bmr),
-        tdee,
-        waistStatus,
-        waistColor,
-        weightDiff,
-        category
-      });
-    }
-  };
-
-  const reset = () => {
-    setResult(null);
-    setHeight('');
-    setWeight('');
-    setWaist('');
-    setAge('');
-  };
-
-  return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 md:p-8 font-sans text-slate-800">
-      <div className="max-w-5xl w-full bg-white rounded-[3rem] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)] overflow-hidden flex flex-col md:flex-row border border-slate-100">
+    <div class="max-w-5xl w-full bg-white rounded-[3rem] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)] overflow-hidden flex flex-col md:flex-row border border-slate-100">
         
-        {/* 左側面板：數據輸入 (綠色主題) */}
-        <div className="md:w-5/12 bg-gradient-to-br from-emerald-950 via-emerald-900 to-teal-950 p-10 text-white relative flex flex-col justify-between">
-          <div className="absolute top-0 right-0 p-12 opacity-5 pointer-events-none">
-            <Zap size={180} />
-          </div>
-          
-          <div className="relative z-10">
-            <div className="flex items-center gap-4 mb-12">
-              <div className="p-3 bg-lime-400 rounded-2xl shadow-lg shadow-lime-400/20">
-                <HeartPulse size={28} className="text-emerald-950" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-black tracking-tight leading-none uppercase">Health Lab</h1>
-                <p className="text-[10px] text-emerald-400/80 font-bold tracking-[0.3em] mt-1">EMERALD EDITION</p>
-              </div>
+        <!-- 左側面板：數據輸入 -->
+        <div class="md:w-5/12 bg-gradient-to-br from-emerald-950 via-emerald-900 to-teal-950 p-10 text-white relative flex flex-col justify-between">
+            <div class="absolute top-0 right-0 p-12 opacity-5 pointer-events-none">
+                <svg width="180" height="180" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
             </div>
-
-            <form onSubmit={calculateHealth} className="space-y-6">
-              {/* 性別選擇 */}
-              <div className="flex bg-black/30 p-1.5 rounded-2xl backdrop-blur-md border border-white/5">
-                <button 
-                  type="button"
-                  onClick={() => setGender('male')}
-                  className={`flex-1 py-3 rounded-xl text-xs font-black transition-all ${gender === 'male' ? 'bg-white text-emerald-950 shadow-xl scale-[1.02]' : 'text-emerald-100/60 hover:text-white'}`}
-                >MALE</button>
-                <button 
-                  type="button"
-                  onClick={() => setGender('female')}
-                  className={`flex-1 py-3 rounded-xl text-xs font-black transition-all ${gender === 'female' ? 'bg-white text-emerald-950 shadow-xl scale-[1.02]' : 'text-emerald-100/60 hover:text-white'}`}
-                >FEMALE</button>
-              </div>
-
-              {/* 手動輸入：年齡與腰圍 */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-emerald-400/70 uppercase tracking-widest ml-1">年齡 Age</label>
-                  <div className="relative group">
-                    <User className="absolute left-4 top-3.5 text-emerald-400/40 group-focus-within:text-lime-400 transition-colors" size={16} />
-                    <input type="number" value={age} onChange={e => setAge(e.target.value)} className="w-full bg-white/10 border border-white/10 rounded-2xl py-3.5 pl-11 pr-4 outline-none focus:bg-white/15 focus:border-lime-400/50 transition-all text-sm font-bold" placeholder="25" required />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-emerald-400/70 uppercase tracking-widest ml-1">腰圍 Waist</label>
-                  <div className="relative group">
-                    <Ruler className="absolute left-4 top-3.5 text-emerald-400/40 group-focus-within:text-lime-400 transition-colors" size={16} />
-                    <input type="number" value={waist} onChange={e => setWaist(e.target.value)} className="w-full bg-white/10 border border-white/10 rounded-2xl py-3.5 pl-11 pr-4 outline-none focus:bg-white/15 focus:border-lime-400/50 transition-all text-sm font-bold" placeholder="cm" />
-                  </div>
-                </div>
-              </div>
-
-              {/* 手動輸入：身高體重 */}
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-emerald-400/70 uppercase tracking-widest ml-1">身高 Height (cm)</label>
-                  <div className="relative group">
-                    <ArrowRight className="absolute left-4 top-4.5 text-emerald-400/40 group-focus-within:text-lime-400 transition-colors" size={20} />
-                    <input type="number" value={height} onChange={e => setHeight(e.target.value)} className="w-full bg-white/10 border border-white/10 rounded-2xl py-4.5 pl-12 pr-4 outline-none focus:bg-white/15 focus:border-lime-400/50 transition-all text-xl font-black" placeholder="175" required />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-emerald-400/70 uppercase tracking-widest ml-1">體重 Weight (kg)</label>
-                  <div className="relative group">
-                    <Scale className="absolute left-4 top-4.5 text-emerald-400/40 group-focus-within:text-lime-400 transition-colors" size={20} />
-                    <input type="number" value={weight} onChange={e => setWeight(e.target.value)} className="w-full bg-white/10 border border-white/10 rounded-2xl py-4.5 pl-12 pr-4 outline-none focus:bg-white/15 focus:border-lime-400/50 transition-all text-xl font-black" placeholder="70" required />
-                  </div>
-                </div>
-              </div>
-
-              {/* 活動量選擇 */}
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-emerald-400/70 uppercase tracking-widest ml-1">生活活動量 Activity</label>
-                <div className="relative">
-                  <select 
-                    value={activity} 
-                    onChange={e => setActivity(e.target.value)}
-                    className="w-full bg-white/10 border border-white/10 rounded-2xl py-4 px-5 outline-none focus:bg-white/15 transition-all appearance-none cursor-pointer text-sm font-bold pr-10"
-                  >
-                    <option value="1.2" className="text-slate-900">久坐型 (辦公室、沒運動)</option>
-                    <option value="1.375" className="text-slate-900">輕度運動 (每週 1-3 天)</option>
-                    <option value="1.55" className="text-slate-900">中度運動 (每週 3-5 天)</option>
-                    <option value="1.725" className="text-slate-900">高度運動 (每週 6-7 天)</option>
-                  </select>
-                  <ChevronRight size={18} className="absolute right-4 top-4 text-emerald-400/50 pointer-events-none rotate-90" />
-                </div>
-              </div>
-
-              <button type="submit" className="w-full bg-lime-400 hover:bg-lime-300 text-emerald-950 font-black py-5 rounded-[1.5rem] shadow-2xl shadow-emerald-950/60 transition-all flex items-center justify-center gap-3 mt-6 group overflow-hidden relative active:scale-95">
-                <span className="relative z-10 flex items-center gap-2 uppercase tracking-widest">開始深度分析 <ChevronRight size={20} className="group-hover:translate-x-1 transition-transform" /></span>
-              </button>
-            </form>
-          </div>
-
-          <div className="mt-12 text-[9px] text-emerald-400/40 font-bold tracking-widest uppercase flex items-center gap-2 relative z-10">
-            <Info size={12} />
-            Medical Disclaimer: Data for reference only.
-          </div>
-        </div>
-
-        {/* 右側面板：分析結果 */}
-        <div className="md:w-7/12 p-8 md:p-16 overflow-y-auto bg-white">
-          {!result ? (
-            <div className="h-full flex flex-col items-center justify-center text-center">
-              <div className="relative mb-8">
-                <div className="w-32 h-32 bg-emerald-50 rounded-[2.5rem] flex items-center justify-center border-4 border-dashed border-emerald-100 animate-[spin_10s_linear_infinite]"></div>
-                <Calculator className="text-emerald-200 absolute inset-0 m-auto" size={56} />
-              </div>
-              <h3 className="text-2xl font-black text-slate-800 tracking-tight uppercase">Ready to Analyze?</h3>
-              <p className="text-slate-400 text-sm mt-3 max-w-[280px] font-medium leading-relaxed">請在左側填入身體數據，我們將提供精確的健康洞察。</p>
-            </div>
-          ) : (
-            <div className="space-y-12 animate-in fade-in slide-in-from-right-12 duration-700">
-              
-              {/* BMI 儀表盤 */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                <div className="space-y-4">
-                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.25em]">BMI 指數結果</span>
-                  <div className="flex items-end gap-3">
-                    <h2 className={`text-7xl font-black tracking-tighter ${result.category.text}`}>{result.bmi}</h2>
-                    <div className={`text-[10px] font-black ${result.category.text} px-3 py-1.5 ${result.category.lightBg} border ${result.category.border} rounded-xl uppercase tracking-wider mb-2`}>
-                      {result.category.label}
-                    </div>
-                  </div>
-                  
-                  {/* 視覺尺標 */}
-                  <div className="relative mt-8">
-                    <div className="w-full h-2.5 bg-slate-100 rounded-full flex overflow-hidden">
-                       <div className="w-[18.5%] h-full bg-cyan-400 opacity-30 border-r border-white"></div>
-                       <div className="w-[5.5%] h-full bg-emerald-500 opacity-30 border-r border-white"></div>
-                       <div className="w-[3%] h-full bg-orange-400 opacity-30 border-r border-white"></div>
-                       <div className="flex-1 h-full bg-rose-400 opacity-30"></div>
-                    </div>
-                    <div 
-                      className={`absolute top-0 -translate-y-1/2 h-6 w-1.5 rounded-full ${result.category.color} border-2 border-white shadow-md transition-all duration-1000 ease-out`}
-                      style={{ left: `${Math.min(Math.max((result.bmi - 10) * 3, 2), 98)}%` }}
-                    ></div>
-                  </div>
-                </div>
-
-                <div className="bg-emerald-950 rounded-[2.5rem] p-8 text-white shadow-2xl shadow-emerald-950/20 relative overflow-hidden group">
-                  <div className="absolute -right-4 -top-4 w-24 h-24 bg-lime-400/10 rounded-full group-hover:scale-150 transition-transform duration-700"></div>
-                  <div className="flex items-center gap-3 text-lime-400 mb-3 relative z-10">
-                    <Flame size={20} className="animate-pulse" />
-                    <span className="text-[10px] font-black uppercase tracking-widest">TDEE 每日熱量需求</span>
-                  </div>
-                  <div className="text-4xl font-black tracking-tighter relative z-10">{result.tdee} <span className="text-sm font-medium text-emerald-400/60">kcal</span></div>
-                  <div className="w-full h-px bg-white/10 my-4 relative z-10"></div>
-                  <p className="text-[11px] text-emerald-100/60 leading-relaxed font-medium relative z-10">維持體重所需的每日總熱量。</p>
-                </div>
-              </div>
-
-              {/* 指標卡片 */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="p-6 rounded-3xl bg-slate-50 border border-slate-100 group">
-                  <div className="text-[9px] font-black text-slate-400 uppercase mb-2 tracking-widest">基礎代謝 BMR</div>
-                  <div className="text-2xl font-black text-slate-800 tracking-tight">{result.bmr} <span className="text-xs font-bold text-slate-300">kcal</span></div>
-                </div>
-                <div className="p-6 rounded-3xl bg-slate-50 border border-slate-100 group">
-                  <div className="text-[9px] font-black text-slate-400 uppercase mb-2 tracking-widest">腰圍評估</div>
-                  <div className={`text-base font-black uppercase ${result.waistColor}`}>
-                    {result.waistStatus}
-                  </div>
-                </div>
-              </div>
-
-              {/* 行動建議 */}
-              <div className="space-y-6">
-                <h4 className="flex items-center gap-2 font-black text-slate-800 text-xs uppercase tracking-[0.2em]">
-                  <Target size={18} className="text-emerald-600" />
-                  Action Roadmap
-                </h4>
-
-                {result.weightDiff > 0 ? (
-                  <div className="bg-gradient-to-br from-emerald-50 to-white border border-emerald-100 rounded-[2rem] p-8 shadow-sm">
-                    <div className="flex items-center gap-3 text-emerald-800 font-black text-xs mb-4 uppercase tracking-widest">
-                      <TrendingDown size={20} className="text-emerald-600" />
-                      減重目標引導
-                    </div>
-                    <p className="text-sm text-slate-600 leading-relaxed font-medium">
-                      要恢復到健康指標，理想減重空間為 <span className="text-3xl font-black text-emerald-700 mx-1">{result.weightDiff}</span> 公斤。
-                      建議每日攝取設定在 <span className="font-bold text-slate-800 underline decoration-lime-400 decoration-2">{result.tdee - 500} kcal</span>。
-                    </p>
-                  </div>
-                ) : (
-                  <div className="bg-emerald-50/50 border border-emerald-100 rounded-[2rem] p-8 flex items-start gap-5">
-                    <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-md flex-shrink-0">
-                      <CheckCircle2 className="text-emerald-500" size={28} />
+            
+            <div class="relative z-10">
+                <div class="flex items-center gap-4 mb-12">
+                    <div class="p-3 bg-lime-400 rounded-2xl shadow-lg shadow-lime-400/20">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#064e3b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/><path d="M12 5 9.04 7.96a2.17 2.17 0 0 0 0 3.08v0c.82.82 2.13.82 2.96 0l2.96-2.96a2.17 2.17 0 0 0 0-3.08v0c-.82-.82-2.13-.82-2.96 0L12 5Z"/><path d="M12 13v8"/><path d="M12 3v2"/></svg>
                     </div>
                     <div>
-                        <span className="font-black text-xs text-emerald-800 uppercase tracking-widest">Excellent Status</span>
-                        <p className="text-sm text-slate-600 mt-1 font-medium leading-relaxed">您的數據在理想範圍！請繼續維持優質的生活型態。</p>
+                        <h1 class="text-2xl font-black tracking-tight leading-none uppercase">Health Lab</h1>
+                        <p class="text-[10px] text-emerald-400/80 font-bold tracking-[0.3em] mt-1">EMERALD EDITION</p>
                     </div>
-                  </div>
-                )}
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                   <div className="flex items-center gap-5 p-5 bg-white border border-slate-100 rounded-3xl">
-                      <div className="w-14 h-14 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center flex-shrink-0">
-                        <Utensils size={24} />
-                      </div>
-                      <div>
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">精準飲食</p>
-                        <p className="text-xs text-slate-600 font-bold leading-relaxed mt-1">
-                          {result.bmi >= 24 ? "降低精緻糖分，增加膳食纖維。" : "維持原型食物，補充足量營養。"}
-                        </p>
-                      </div>
-                   </div>
-                   <div className="flex items-center gap-5 p-5 bg-white border border-slate-100 rounded-3xl">
-                      <div className="w-14 h-14 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center flex-shrink-0">
-                        <Activity size={24} />
-                      </div>
-                      <div>
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">運動增益</p>
-                        <p className="text-xs text-slate-600 font-bold leading-relaxed mt-1">
-                          {parseFloat(activity) < 1.4 ? "每週加入 2 次有氧訓練。" : "目前的運動強度很好，建議維持。"}
-                        </p>
-                      </div>
-                   </div>
                 </div>
-              </div>
 
-              <button onClick={reset} className="w-full py-6 text-slate-300 hover:text-emerald-600 font-black text-[10px] uppercase tracking-[0.3em] transition-all flex items-center justify-center gap-3 border-t border-slate-100 mt-8">
-                <RefreshCcw size={14} /> Reset all data
-              </button>
+                <form id="healthForm" class="space-y-6">
+                    <!-- 性別選擇 -->
+                    <div class="flex bg-black/30 p-1.5 rounded-2xl backdrop-blur-md border border-white/5">
+                        <input type="radio" name="gender" id="male" value="male" class="hidden" checked>
+                        <label for="male" id="labelMale" class="flex-1 py-3 rounded-xl text-xs font-black text-center cursor-pointer transition-all bg-white text-emerald-950 shadow-xl scale-[1.02]">MALE</label>
+                        
+                        <input type="radio" name="gender" id="female" value="female" class="hidden">
+                        <label for="female" id="labelFemale" class="flex-1 py-3 rounded-xl text-xs font-black text-center cursor-pointer transition-all text-emerald-100/60 hover:text-white">FEMALE</label>
+                    </div>
+
+                    <!-- 手動輸入：年齡與腰圍 -->
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-black text-emerald-400/70 uppercase tracking-widest ml-1">年齡 Age</label>
+                            <div class="relative group">
+                                <div class="absolute left-4 top-3.5 text-emerald-400/40 group-focus-within:text-lime-400 transition-colors">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                                </div>
+                                <input type="number" id="age" class="w-full bg-white/10 border border-white/10 rounded-2xl py-3.5 pl-11 pr-4 outline-none focus:bg-white/15 focus:border-lime-400/50 transition-all text-sm font-bold" placeholder="25" required>
+                            </div>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-black text-emerald-400/70 uppercase tracking-widest ml-1">腰圍 Waist</label>
+                            <div class="relative group">
+                                <div class="absolute left-4 top-3.5 text-emerald-400/40 group-focus-within:text-lime-400 transition-colors">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.3 15.3a2.4 2.4 0 0 1 0 3.4l-2.6 2.6a2.4 2.4 0 0 1-3.4 0L2.7 8.7a2.4 2.4 0 0 1 0-3.4l2.6-2.6a2.4 2.4 0 0 1 3.4 0Z"/><path d="m14.5 12.5-5-5"/><path d="m9.4 14.9 1.2-1.2"/><path d="m7 17.3 1.2-1.2"/><path d="m4.6 19.7 1.2-1.2"/></svg>
+                                </div>
+                                <input type="number" id="waist" class="w-full bg-white/10 border border-white/10 rounded-2xl py-3.5 pl-11 pr-4 outline-none focus:bg-white/15 focus:border-lime-400/50 transition-all text-sm font-bold" placeholder="cm">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 手動輸入：身高體重 -->
+                    <div class="space-y-4">
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-black text-emerald-400/70 uppercase tracking-widest ml-1">身高 Height (cm)</label>
+                            <div class="relative group">
+                                <div class="absolute left-4 top-4.5 text-emerald-400/40 group-focus-within:text-lime-400 transition-colors pt-1">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
+                                </div>
+                                <input type="number" id="height" class="w-full bg-white/10 border border-white/10 rounded-2xl py-4 pl-12 pr-4 outline-none focus:bg-white/15 focus:border-lime-400/50 transition-all text-xl font-black" placeholder="175" required>
+                            </div>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-black text-emerald-400/70 uppercase tracking-widest ml-1">體重 Weight (kg)</label>
+                            <div class="relative group">
+                                <div class="absolute left-4 top-4.5 text-emerald-400/40 group-focus-within:text-lime-400 transition-colors pt-1">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="16" height="16" x="4" y="4" rx="2"/><path d="M9 20v2"/><path d="M15 20v2"/><path d="M8 8h8"/><path d="M12 8v4"/></svg>
+                                </div>
+                                <input type="number" id="weight" class="w-full bg-white/10 border border-white/10 rounded-2xl py-4 pl-12 pr-4 outline-none focus:bg-white/15 focus:border-lime-400/50 transition-all text-xl font-black" placeholder="70" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 活動量選擇 -->
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-black text-emerald-400/70 uppercase tracking-widest ml-1">生活活動量 Activity</label>
+                        <select id="activity" class="w-full bg-white/10 border border-white/10 rounded-2xl py-4 px-5 outline-none focus:bg-white/15 transition-all appearance-none cursor-pointer text-sm font-bold pr-10 text-white">
+                            <option value="1.2" class="text-slate-900">久坐型 (辦公室、沒運動)</option>
+                            <option value="1.375" class="text-slate-900">輕度運動 (每週 1-3 天)</option>
+                            <option value="1.55" class="text-slate-900">中度運動 (每週 3-5 天)</option>
+                            <option value="1.725" class="text-slate-900">高度運動 (每週 6-7 天)</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="w-full bg-lime-400 hover:bg-lime-300 text-emerald-950 font-black py-5 rounded-[1.5rem] shadow-2xl shadow-emerald-950/60 transition-all flex items-center justify-center gap-3 mt-6 group active:scale-95 uppercase tracking-widest">
+                        開始深度分析
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="group-hover:translate-x-1 transition-transform"><path d="m9 18 6-6-6-6"/></svg>
+                    </button>
+                </form>
             </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-};
 
-export default App;
+            <div class="mt-12 text-[9px] text-emerald-400/40 font-bold tracking-widest uppercase flex items-center gap-2 relative z-10">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                Medical Disclaimer: Data for reference only.
+            </div>
+        </div>
+
+        <!-- 右側面板：分析結果 -->
+        <div id="resultPanel" class="md:w-7/12 p-8 md:p-16 overflow-y-auto bg-white custom-scrollbar">
+            <!-- 初始空狀態 -->
+            <div id="emptyState" class="h-full flex flex-col items-center justify-center text-center">
+                <div class="relative mb-8">
+                    <div class="w-32 h-32 bg-emerald-50 rounded-[2.5rem] flex items-center justify-center border-4 border-dashed border-emerald-100 animate-[spin_10s_linear_infinite]"></div>
+                    <svg class="text-emerald-200 absolute inset-0 m-auto" width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="16" height="16" x="4" y="4" rx="2"/><path d="M9 12h6"/><path d="M12 9v6"/></svg>
+                </div>
+                <h3 class="text-2xl font-black text-slate-800 tracking-tight uppercase">Ready to Analyze?</h3>
+                <p class="text-slate-400 text-sm mt-3 max-w-[280px] font-medium leading-relaxed">請在左側填入身體數據，我們將提供精確的健康洞察。</p>
+            </div>
+
+            <!-- 結果內容 (隱藏) -->
+            <div id="resultContent" class="hidden space-y-12 animate-fade-in">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
+                    <div class="space-y-4">
+                        <span class="text-[10px] font-black text-slate-400 uppercase tracking-[0.25em]">BMI 指數結果</span>
+                        <div class="flex items-end gap-3">
+                            <h2 id="bmiValue" class="text-7xl font-black tracking-tighter">--</h2>
+                            <div id="bmiLabel" class="text-[10px] font-black px-3 py-1.5 rounded-xl uppercase tracking-wider mb-2 border">--</div>
+                        </div>
+                        <div class="relative mt-8">
+                            <div class="w-full h-2.5 bg-slate-100 rounded-full flex overflow-hidden">
+                                <div class="w-[18.5%] h-full bg-cyan-400 opacity-30 border-r border-white"></div>
+                                <div class="w-[5.5%] h-full bg-emerald-500 opacity-30 border-r border-white"></div>
+                                <div class="w-[3%] h-full bg-orange-400 opacity-30 border-r border-white"></div>
+                                <div class="flex-1 h-full bg-rose-400 opacity-30"></div>
+                            </div>
+                            <div id="bmiPointer" class="absolute top-0 -translate-y-1/2 h-6 w-1.5 rounded-full bg-emerald-500 border-2 border-white shadow-md transition-all duration-1000 ease-out" style="left: 0%"></div>
+                        </div>
+                    </div>
+
+                    <div class="bg-emerald-950 rounded-[2.5rem] p-8 text-white shadow-2xl shadow-emerald-950/20 relative overflow-hidden group">
+                        <div class="flex items-center gap-3 text-lime-400 mb-3 relative z-10">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="animate-pulse"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
+                            <span class="text-[10px] font-black uppercase tracking-widest">TDEE 每日熱量需求</span>
+                        </div>
+                        <div class="text-4xl font-black tracking-tighter relative z-10"><span id="tdeeValue">0</span> <span class="text-sm font-medium text-emerald-400/60">kcal</span></div>
+                        <div class="w-full h-px bg-white/10 my-4 relative z-10"></div>
+                        <p class="text-[11px] text-emerald-100/60 leading-relaxed font-medium relative z-10">維持目前體重所需的每日總消耗熱量。</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="p-6 rounded-3xl bg-slate-50 border border-slate-100">
+                        <div class="text-[9px] font-black text-slate-400 uppercase mb-2 tracking-widest">基礎代謝 BMR</div>
+                        <div class="text-2xl font-black text-slate-800 tracking-tight"><span id="bmrValue">0</span> <span class="text-xs font-bold text-slate-300">kcal</span></div>
+                    </div>
+                    <div class="p-6 rounded-3xl bg-slate-50 border border-slate-100">
+                        <div class="text-[9px] font-black text-slate-400 uppercase mb-2 tracking-widest">腰圍評估</div>
+                        <div id="waistStatus" class="text-base font-black uppercase">--</div>
+                    </div>
+                </div>
+
+                <div class="space-y-6">
+                    <h4 class="flex items-center gap-2 font-black text-slate-800 text-xs uppercase tracking-[0.2em]">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+                        個人化健康藍圖
+                    </h4>
+
+                    <div id="actionCard" class="bg-gradient-to-br from-emerald-50 to-white border border-emerald-100 rounded-[2rem] p-8 shadow-sm">
+                        <div class="flex items-center gap-3 text-emerald-800 font-black text-xs mb-4 uppercase tracking-widest">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m3 16 4-4 4 4 4-4 6 6"/><path d="M18 10h4v4"/></svg>
+                            改善目標引導
+                        </div>
+                        <p id="actionText" class="text-sm text-slate-600 leading-relaxed font-medium"></p>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="flex items-center gap-5 p-5 bg-white border border-slate-100 rounded-3xl">
+                            <div class="w-14 h-14 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center flex-shrink-0">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/></svg>
+                            </div>
+                            <div>
+                                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">飲食導向</p>
+                                <p id="dietTip" class="text-xs text-slate-600 font-bold mt-1 leading-relaxed"></p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-5 p-5 bg-white border border-slate-100 rounded-3xl">
+                            <div class="w-14 h-14 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center flex-shrink-0">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8h.01"/><path d="M6 8h.01"/><path d="M2 12h.01"/><path d="M22 12h.01"/><path d="M10 16c.5.5 2.5.5 3 0"/><path d="M15 12h.01"/><path d="M9 12h.01"/><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2Z"/></svg>
+                            </div>
+                            <div>
+                                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">體能策略</p>
+                                <p id="exerciseTip" class="text-xs text-slate-600 font-bold mt-1 leading-relaxed"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <button id="btnReset" class="w-full py-6 text-slate-300 hover:text-emerald-600 font-black text-[10px] uppercase tracking-[0.3em] transition-all flex items-center justify-center gap-3 border-t border-slate-100 mt-8">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M3 21v-5h5"/></svg>
+                    重置所有數據
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('healthForm');
+        const labels = {
+            male: document.getElementById('labelMale'),
+            female: document.getElementById('labelFemale')
+        };
+        const genderRadios = document.getElementsByName('gender');
+
+        // 性別選擇切換 UI
+        genderRadios.forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                const selected = e.target.value;
+                const other = selected === 'male' ? 'female' : 'male';
+                
+                labels[selected].className = "flex-1 py-3 rounded-xl text-xs font-black text-center cursor-pointer transition-all bg-white text-emerald-950 shadow-xl scale-[1.02]";
+                labels[other].className = "flex-1 py-3 rounded-xl text-xs font-black text-center cursor-pointer transition-all text-emerald-100/60 hover:text-white";
+            });
+        });
+
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const gender = document.querySelector('input[name="gender"]:checked').value;
+            const age = parseFloat(document.getElementById('age').value);
+            const height = parseFloat(document.getElementById('height').value);
+            const weight = parseFloat(document.getElementById('weight').value);
+            const waist = parseFloat(document.getElementById('waist').value || 0);
+            const activity = parseFloat(document.getElementById('activity').value);
+
+            // 計算 BMI
+            const hm = height / 100;
+            const bmi = (weight / (hm * hm)).toFixed(1);
+
+            // 計算 BMR (Mifflin-St Jeor)
+            let bmr = (10 * weight) + (6.25 * height) - (5 * age);
+            bmr = gender === 'male' ? bmr + 5 : bmr - 161;
+
+            // 計算 TDEE
+            const tdee = Math.round(bmr * activity);
+
+            // BMI 分類與顏色設定
+            let category = {};
+            if (bmi < 18.5) {
+                category = { label: '體重過輕', color: 'bg-cyan-500', text: 'text-cyan-500', border: 'border-cyan-200', lightBg: 'bg-cyan-50' };
+            } else if (bmi < 24) {
+                category = { label: '健康體重', color: 'bg-emerald-500', text: 'text-emerald-500', border: 'border-emerald-200', lightBg: 'bg-emerald-50' };
+            } else if (bmi < 27) {
+                category = { label: '體重過重', color: 'bg-orange-500', text: 'text-orange-600', border: 'border-orange-200', lightBg: 'bg-orange-50' };
+            } else {
+                category = { label: '肥胖狀態', color: 'bg-rose-500', text: 'text-rose-500', border: 'border-rose-200', lightBg: 'bg-rose-50' };
+            }
+
+            // 腰圍評估
+            let waistInfo = "未提供";
+            let waistClass = "text-slate-400";
+            if (waist > 0) {
+                const limit = gender === 'male' ? 90 : 80;
+                if (waist >= limit) {
+                    waistInfo = "警示 (腹部肥胖)";
+                    waistClass = "text-rose-500";
+                } else {
+                    waistInfo = "標準範圍";
+                    waistClass = "text-emerald-500";
+                }
+            }
+
+            // 更新 UI
+            document.getElementById('emptyState').classList.add('hidden');
+            document.getElementById('resultContent').classList.remove('hidden');
+
+            document.getElementById('bmiValue').innerText = bmi;
+            document.getElementById('bmiValue').className = `text-7xl font-black tracking-tighter ${category.text}`;
+            
+            const labelEl = document.getElementById('bmiLabel');
+            labelEl.innerText = category.label;
+            labelEl.className = `text-[10px] font-black ${category.text} px-3 py-1.5 ${category.lightBg} border ${category.border} rounded-xl uppercase tracking-wider mb-2`;
+
+            const pointerPos = Math.min(Math.max((bmi - 10) * 3, 2), 98);
+            const pointer = document.getElementById('bmiPointer');
+            pointer.style.left = `${pointerPos}%`;
+            pointer.className = `absolute top-0 -translate-y-1/2 h-6 w-1.5 rounded-full ${category.color} border-2 border-white shadow-md transition-all duration-1000 ease-out`;
+
+            document.getElementById('tdeeValue').innerText = tdee;
+            document.getElementById('bmrValue').innerText = Math.round(bmr);
+            
+            const waistEl = document.getElementById('waistStatus');
+            waistEl.innerText = waistInfo;
+            waistEl.className = `text-base font-black uppercase ${waistClass}`;
+
+            // 行動建議邏輯
+            const maxHealthyWeight = (24 * (hm * hm)).toFixed(1);
+            const weightDiff = (weight - maxHealthyWeight).toFixed(1);
+            const actionCard = document.getElementById('actionCard');
+            const actionText = document.getElementById('actionText');
+
+            if (weightDiff > 0) {
+                actionCard.className = "bg-gradient-to-br from-emerald-50 to-white border border-emerald-100 rounded-[2rem] p-8 shadow-sm";
+                actionText.innerHTML = `距離健康體重指標還有 <span class="text-3xl font-black text-emerald-700 mx-1">${weightDiff}</span> 公斤的優化空間。建議每日攝取設定在 <span class="font-bold text-slate-800 underline decoration-lime-400 decoration-2">${tdee - 500} kcal</span> 以達成穩健進度。`;
+            } else {
+                actionCard.className = "bg-emerald-50/50 border border-emerald-100 rounded-[2rem] p-8 flex items-start gap-5";
+                actionText.innerHTML = `<div class="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-md flex-shrink-0 mr-4 inline-flex"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg></div><div class="inline-block"><span class="font-black text-xs text-emerald-800 uppercase tracking-widest">Excellent Status</span><p class="text-sm text-slate-600 mt-1 font-medium leading-relaxed">您的各項數據表現傑出！請繼續維持目前的優質生活習慣。</p></div>`;
+            }
+
+            document.getElementById('dietTip').innerText = bmi >= 24 ? "優先降低精緻醣類攝取，增加優質蛋白質。" : "維持攝取原型食物，補充足量微量元素。";
+            document.getElementById('exerciseTip').innerText = activity < 1.4 ? "每日加入至少 20 分鐘的快走或輕度運動。" : "目前的活動頻率很好，建議加入適度阻力訓練。";
+            
+            // 捲動到頂部以便查看結果
+            document.getElementById('resultPanel').scrollTop = 0;
+        });
+
+        document.getElementById('btnReset').addEventListener('click', () => {
+            form.reset();
+            document.getElementById('emptyState').classList.remove('hidden');
+            document.getElementById('resultContent').classList.add('hidden');
+            // 重置性別 UI
+            labels.male.className = "flex-1 py-3 rounded-xl text-xs font-black text-center cursor-pointer transition-all bg-white text-emerald-950 shadow-xl scale-[1.02]";
+            labels.female.className = "flex-1 py-3 rounded-xl text-xs font-black text-center cursor-pointer transition-all text-emerald-100/60 hover:text-white";
+        });
+    </script>
+</body>
+</html>
